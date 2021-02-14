@@ -3,6 +3,7 @@
 #include "stm32f1xx_hal.h"
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "arm_math.h"
 
 /* USER CODE BEGIN Includes */
@@ -18,6 +19,9 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 void sendData(char * data, UART_HandleTypeDef * huart);
+double _random(void);
+//static int generatRandomPositiveNegitiveValue(int max , int min);
+void NaiveBayesParams(double m, double n);
 void NaiveBayes(void);
 
 /* 
@@ -28,23 +32,35 @@ arm_gaussian_naive_bayes_instance_f32 S;
 #define NB_OF_CLASSES 3
 #define VECTOR_DIMENSION 2
 
+//const float32_t theta[NB_OF_CLASSES*VECTOR_DIMENSION] = {
+//  1.4539529436590528f, 0.8722776016801852f, 
+//  -1.5267934452462473f, 0.903204577814203f, 
+//  -0.15338006360932258f, -2.9997913665803964f
+//}; /**< Mean values for the Gaussians */
+
+
+//const float32_t sigma[NB_OF_CLASSES*VECTOR_DIMENSION] = {
+//  1.0063470889514925f, 0.9038018246524426f, 
+//  1.0224479953244736f, 0.7768764290432544f, 
+//  1.1217662403241206f, 1.2303890106020325f
+//}; /**< Variances for the Gaussians */
+
+//const float32_t classPriors[NB_OF_CLASSES] = {
+//  0.3333333333333333f, 0.3333333333333333f, 0.3333333333333333f
+//}; /**< Class prior probabilities */
+
 const float32_t theta[NB_OF_CLASSES*VECTOR_DIMENSION] = {
-  1.4539529436590528f, 0.8722776016801852f, 
-  -1.5267934452462473f, 0.903204577814203f, 
-  -0.15338006360932258f, -2.9997913665803964f
+  1.5222382077358991f, 1.157224604682766f, -1.3472859197979914f, 1.0827257867095728f, 0.004190558185282884f, -2.945286136448813f
 }; /**< Mean values for the Gaussians */
 
 
 const float32_t sigma[NB_OF_CLASSES*VECTOR_DIMENSION] = {
-  1.0063470889514925f, 0.9038018246524426f, 
-  1.0224479953244736f, 0.7768764290432544f, 
-  1.1217662403241206f, 1.2303890106020325f
+  0.7408905950430729f, 0.9529201039412543f, 1.1324022600572552f, 0.9056582434345928f, 1.1286603050149235f, 1.0515999495488537f
 }; /**< Variances for the Gaussians */
 
 const float32_t classPriors[NB_OF_CLASSES] = {
   0.3333333333333333f, 0.3333333333333333f, 0.3333333333333333f
 }; /**< Class prior probabilities */
-
 
 int main(void)
 {
@@ -61,17 +77,61 @@ int main(void)
   MX_USART2_UART_Init();
 	HAL_Delay(2000);
 	char buff[50] = "Serial Data\n";
-	HAL_UART_Transmit(&huart2,buff,strlen(buff),500);
-	
+	HAL_UART_Transmit(&huart2,buff,strlen(buff),50);
 	
 	
 	NaiveBayes();
   while (1)
   {
+		
 		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
-		HAL_Delay(500);
+		//sprintf(buff,"Random: %lff, %lff\n",(double)((_random() < 0) ? (_random() * -1.0) : _random()), _random());
+//		sprintf(buff,"Random: %lff, %lff\n",(double)_random(),(double)_random());
+//		HAL_UART_Transmit(&huart2,buff,strlen(buff),50);
+		NaiveBayesParams((double)_random(), (double)_random());
+		HAL_Delay(10);
   }
 
+}
+
+// static int generatRandomPositiveNegitiveValue(int max , int min) {
+//    //Random rand = new Random();
+//    int ii = -min + (int) (rand()%20 * ((max - (-min)) + 1));
+//    return ii;
+//}
+
+/*Generate random number between -0.1 and 3.0
+*/
+double _random(void){
+	
+	//return ((rand()%(41-5+1)+5)-10)*0.1;
+	return 32 * ( (1.0*rand() )/RAND_MAX - 0.6)*0.1;
+}
+
+
+void NaiveBayesParams(double m, double n){
+	
+	float32_t in[2];
+	char buff[80];
+
+  /* Result of the classifier */
+  float32_t result[NB_OF_CLASSES];
+  float32_t maxProba;
+  uint32_t index;
+  
+  S.vectorDimension = VECTOR_DIMENSION; 
+  S.numberOfClasses = NB_OF_CLASSES; 
+  S.theta = theta;          
+  S.sigma = sigma;         
+  S.classPriors = classPriors;    
+  S.epsilon= 4.643506595229787e-09; 
+
+  in[0] = m;
+  in[1] = n;
+
+  index = arm_gaussian_naive_bayes_predict_f32(&S, in, result);
+	sprintf(buff,"Random: %lff, %lff in Class: %zu\n",(double)m, (double)n, index);
+	HAL_UART_Transmit(&huart2,buff,strlen(buff),500);
 }
 
 void NaiveBayes(void){
@@ -89,7 +149,7 @@ void NaiveBayes(void){
   S.theta = theta;          
   S.sigma = sigma;         
   S.classPriors = classPriors;    
-  S.epsilon=4.328939296523643e-09f; 
+  S.epsilon= 4.643506595229787e-09; 
 
   in[0] = 1.5f;
   in[1] = 1.0f;
@@ -133,6 +193,7 @@ void NaiveBayes(void){
 		maxProba = result[index];
 
 }
+
 
 void sendData(char * data, UART_HandleTypeDef * huart){
   // UART can only send unsigned int

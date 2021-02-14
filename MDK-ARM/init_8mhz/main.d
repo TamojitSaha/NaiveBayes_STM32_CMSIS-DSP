@@ -26,6 +26,7 @@ init_8mhz\main.o: ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_flash_ex.h
 init_8mhz\main.o: ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_pwr.h
 init_8mhz\main.o: ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_uart.h
 init_8mhz\main.o: D:\Softwares\Installed\Keil_5\ARM\ARMCC\Bin\..\include\math.h
+init_8mhz\main.o: D:\Softwares\Installed\Keil_5\ARM\ARMCC\Bin\..\include\stdlib.h
 init_8mhz\main.o: D:\Documents\Projects\CMSIS_5\CMSIS\DSP\Include\arm_math.h
 init_8mhz\main.o: D:\Documents\Projects\CMSIS_5\CMSIS\DSP\Include\arm_math_types.h
 init_8mhz\main.o: D:\Softwares\Installed\Keil_5\ARM\ARMCC\Bin\..\include\float.h
